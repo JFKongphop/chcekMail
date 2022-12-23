@@ -13,38 +13,70 @@ let dbCon = mysql.createConnection({
     host : "localhost",
     user : "root",
     database : "readEmail"
-})
-dbCon.connect()
+});
+
+dbCon.connect();
+
 
 // index route of api
 app.get('/', (req, res, next) => {
     return res.status(200).send({
         message : 'Welcome to my mail notifications.'
+        
     });
 });
 
 // all of the detail in email
 app.get('/isInside', (req, res) => {
+    // set all email after delete
+    let allEmails;
+    let message = "";
+
+    // create database
     dbCon.query('SELECT * FROM insideEmail', (error, results, fields)=>{
         if (error) throw error;
 
-        let  message = "";
         if (results === undefined || results.length === 0){
             message = "The email is read.";
         }
 
         else {
             message = "Successfully retrieved all emails.";
+            allEmails = results;
+            console.log(`in select ${allEmails}`);
         }
+
+        // delete the table of mainTable
+        dbCon.query('DROP TABLE insideEmail', (err) => {
+            if (err) throw err;
+        });
+
+
+        // create the table mainTable
+        let sqlCre = `CREATE TABLE insideEmail (
+            id INT AUTO_INCREMENT PRIMARY KEY, 
+            date VARCHAR(100),
+            from_address VARCHAR(100), 
+            to_address VARCHAR(100), 
+            subject VARCHAR(500), 
+            body VARCHAR(10000))
+        `;
+    
+        dbCon.query(sqlCre, (err) => {
+            if (err) throw err;
+        })
+
 
         return res.send({
             error : false, 
-            data : results, 
+            data : allEmails, 
             message : message
         });
     })
 });
 
+
+// optional
 app.get('/eachDetail/:id', (req, res) => {
     // get id of book to show each book
     let id = req.params.id;
@@ -83,6 +115,26 @@ app.get('/eachDetail/:id', (req, res) => {
             });
         });
     }
+})
+
+
+app.get('/allEmail', (req, res) => {
+    dbCon.connect((err) => {
+        if (err) throw err;
+        console.log("Connected!");
+
+        let sql = `CREATE TABLE insideEmail (
+            id INT AUTO_INCREMENT PRIMARY KEY, 
+            from_address VARCHAR(100), 
+            to_address VARCHAR(100), 
+            subject VARCHAR(500), 
+            body VARCHAR(10000))
+        `;
+        dbCon.query(sql, (err, result) => {
+            if (err) throw err;
+            console.log('Table create');
+        });
+    });
 })
 
 app.listen(PORT, () => {
