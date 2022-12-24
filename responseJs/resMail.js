@@ -2,6 +2,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const mysql = require('mysql');
 const cors = require('cors')
+const axios = require('axios');
+
 const app = express();
 const PORT = 3000;
 
@@ -74,6 +76,16 @@ app.get('/isInside', (req, res) => {
         });
     })
 });
+
+// don't need database just fetch and send to this api then will connect webhook line chatbot
+// http://localhost:3000/finalList
+app.get('/finalList', async (req, res) => {
+    const { data } = await axios.get('http://127.0.0.1:5000');
+
+    return res.status(200).send({
+        data : data
+    })
+})
 
 
 // optional
