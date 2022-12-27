@@ -3,36 +3,43 @@ from flask_cors import CORS
 import imaplib
 import email
 import hide
-# import mysql.connector
+import re
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'somerandomstring'
 app.config["JSON_AS_ASCII"] = False
 CORS(app)
 
+# find the postion of the body to slice it
+def wordPostions(body, wordSearch):
+    results = [m.start() for m in re.finditer(f"(?={wordSearch})", str(body))]
 
-# def connectDatabase():
-#     return mysql.connector.connect(
-#         host = "localhost",
-#         user = "root",
-#         password = "",
-#         db = "readEmail"
-#     )
+    return results
 
+# filter the body from the message when it send from normal email
+def bodyFilter(body):
+    wordToFind = "Content-Type"
+    body = str(body)
+    allWordsPos = wordPostions(body, wordToFind)
+    pos1 = allWordsPos[1] + 43
+    pos2 = allWordsPos[2] - 33
+    bodyContent = body[pos1:pos2]
 
-
-
+    return bodyContent
 
 
 @app.route("/", methods=["GET"])
 def index():
+
+    # permanent login gmail
     imap_server = imaplib.IMAP4_SSL('imap.gmail.com')
     imap_server.login(hide.EMAIL, hide.PASSWORD)
     imap_server.select('INBOX')
     status, messages = imap_server.search(None, 'UNSEEN')
     message_ids = messages[0].split()
 
-    
+    # check amount of email indox that unseen
     if len(message_ids) != 0:
         try:
             emailList = []
@@ -41,47 +48,42 @@ def index():
                 status, data = imap_server.fetch(message_id, '(RFC822)')
                 message = email.message_from_bytes(data[0][1])
 
+                # set the element in gmail
                 date = message['Date']
                 from_address = message['From']
                 to_address = message['To']
                 subject = message['Subject']
-                body = message.get_payload()
 
+                # seperate the decide from send body email 
+                bodyMessage = ""
+
+                # send by casual device
+                try :
+                    bodyMessage = bodyFilter(message)
+
+                # send by script such as .py or .js
+                except :
+                    bodyMessage = message.get_payload()
+
+                # set it to array from each context
                 emailList.append({
-                    "Date" : date,
-                    "From" : from_address,
-                    "To" : to_address,
-                    "Subject" : subject,
-                    "Body" : body
+                    "date" : date,
+                    "from" : from_address,
+                    "to" : to_address,
+                    "subject" : subject,
+                    "body" : bodyMessage
                 })
 
-                # mydb = connectDatabase()
-                # mycursor = mydb.cursor(dictionary=True)
-                # sql = "INSERT INTO insideEmail (date, from_address, to_address, subject, body) VALUES (%s, %s, %s, %s, %s)"
-                # val = (date, from_address, to_address, subject, body)
-                # mycursor.execute(sql, val)
-                # mydb.commit()
-
-            #imap_server.close()
-            return make_response(jsonify({"message" : "Email is read", "inside" : emailList}), 200)
+            return make_response(jsonify({"inside" : emailList}), 200)
         
         except KeyError:
             return KeyError
 
     else:
-        return "Done all read"
+        return make_response(jsonify({"inside" : "All mails are read"}), 200)
 
 
-# @app.route("/isInside")
-# def readApi():
-#     mydb = connectDatabase()
-#     myCursor = mydb.cursor(dictionary=True)
-#     myCursor.execute("SELECT * FROM insideEmail")
-#     myResult = myCursor.fetchall()
-    
-#     return make_response(jsonify(myResult), 200)
+# if __name__ == "__main__":
+#     app.run(Debug=True)
 
-# http://127.0.0.1:5000/isInside
-
-if __name__ == "__main__":
-    app.run(Debug=True)
+app.run()

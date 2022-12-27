@@ -5,7 +5,13 @@
   "main": "resMail.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon resMail.js"
+    "start": "nodemon resMail.js",
+    "sm": "python3 ../requestpy/sm.py",
+    "sm1": "python3 ../requestpy/sm1.py",
+    "app": "python3 ../requestpy/app.py",
+    "ft" : "python3 ../requestpy/test.py",
+    "a" : "python3 a.py",
+    "fet" : "node testFetch.js"
   },
   "keywords": [],
   "author": "",
@@ -16,6 +22,7 @@
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "mysql": "^2.18.1",
-    "nodemon": "^2.0.20"
+    "nodemon": "^2.0.20",
+    "translate-google": "^1.5.0"
   }
 }
